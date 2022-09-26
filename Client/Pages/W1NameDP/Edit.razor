@@ -1,0 +1,69 @@
+﻿@page "/W1NameDP/Edit/{id:int?}"
+@using W1.Shared
+@inject HttpClient Http
+@inject NavigationManager navigation
+
+
+<PageTitle>@(id.HasValue ? "Edit" : "Create") Name</PageTitle>
+<h1>@(id.HasValue ? "Edit" : "Create") Name</h1>
+<br />
+<label for="Name">Name:</label>
+<input type="text" id="Name" @bind-value="name" maxLength="20">
+<label for="Name" class="text-danger" hidden="@(!nameRequireMsgShow)">Require!</label>
+<br />
+<button @onclick="Save">儲存</button>
+<button @onclick="BackIndex">返回</button>
+@code {
+    [Parameter]
+    public int? id { get; set; }
+
+    private string name { get; set; }
+    private bool nameRequireMsgShow { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        nameRequireMsgShow = false;
+        name = string.Empty;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (id.HasValue)
+        {
+            name = (await Http.GetFromJsonAsync<W1.Shared.W1Name>($"api/W1NameDapper/{id}"))?.Name ?? string.Empty;
+        }
+    }
+
+    private async Task Save()
+    {
+        nameRequireMsgShow = false;
+        if (string.IsNullOrWhiteSpace(name))
+            nameRequireMsgShow = true;
+        else
+        {
+            var arg = new W1.Shared.W1Name()
+                {
+                    Name = name
+                };
+            HttpResponseMessage res;
+            if (id.HasValue)
+            {
+                arg.Id = id.Value;
+                res = await Http.PutAsJsonAsync<W1.Shared.W1Name>("api/W1NameDapper", arg);
+            }
+            else
+            {
+                res = await Http.PostAsJsonAsync<W1.Shared.W1Name>("api/W1NameDapper", arg);
+            }
+
+            var result = await res.Content.ReadFromJsonAsync<bool>();
+            if (result)
+                BackIndex();
+        }
+    }
+
+    private void BackIndex()
+    {
+        navigation.NavigateTo("W1NameDP");
+    }
+}

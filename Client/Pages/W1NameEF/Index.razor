@@ -1,0 +1,56 @@
+﻿@page "/W1Name"
+@using W1.Shared
+@inject HttpClient Http
+@inject NavigationManager navigation
+
+<PageTitle>Name</PageTitle>
+<h1>Name</h1>
+<Button @onclick="@(e => NavigateToEdit(null))">Create</Button>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Remove</th>
+            <th>Edit</th>
+            <th>Id</th>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var name in names)
+        {
+            <tr>
+                <td><button @onclick="@(e => Remove(name.Id))">Remove</button></td>
+                <td><button @onclick="@(e => NavigateToEdit(name.Id))">Edit</button></td>
+                <td>@name.Id</td>
+                <td>@name.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<W1.Shared.W1Name> names;
+
+    protected override Task OnInitializedAsync()
+    {
+        names = new List<W1Name>();
+
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        names = await Http.GetFromJsonAsync<List<W1.Shared.W1Name>>("api/W1NameEF") ?? new List<W1.Shared.W1Name>();
+    }
+
+    private void NavigateToEdit(int? id)
+    {
+        navigation.NavigateTo($"W1Name/Edit/{id}");
+    }
+
+    private async Task Remove(int id)
+    {
+        await Http.DeleteAsync($"api/W1NameEF/{id}");
+        names = await Http.GetFromJsonAsync<List<W1.Shared.W1Name>>("api/W1NameEF") ?? new List<W1.Shared.W1Name>();
+    }
+}
